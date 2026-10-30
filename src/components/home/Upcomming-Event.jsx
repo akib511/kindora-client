@@ -1,63 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, CalendarDays, ArrowUpRight } from "lucide-react";
-
-const events = [
-  {
-    id: 1,
-    title: "Community Clean-Up Day",
-    category: "Environment",
-    date: "November 15, 2026",
-    location: "Dhaka, Bangladesh",
-    image:
-      "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=800",
-  },
-  {
-    id: 2,
-    title: "Food Distribution Program",
-    category: "Food Support",
-    date: "November 18, 2026",
-    location: "Khulna, Bangladesh",
-    image:
-      "https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=800",
-  },
-  {
-    id: 3,
-    title: "Free Education Campaign",
-    category: "Education",
-    date: "November 20, 2026",
-    location: "Satkhira, Bangladesh",
-    image:
-      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800",
-  },
-  {
-    id: 4,
-    title: "Tree Plantation Drive",
-    category: "Environment",
-    date: "November 23, 2026",
-    location: "Chittagong, Bangladesh",
-    image:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=800",
-  },
-  {
-    id: 5,
-    title: "Winter Clothes Donation",
-    category: "Donation",
-    date: "November 25, 2026",
-    location: "Rajshahi, Bangladesh",
-    image:
-      "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=800",
-  },
-  {
-    id: 6,
-    title: "Community Health Awareness",
-    category: "Healthcare",
-    date: "November 28, 2026",
-    location: "Dhaka, Bangladesh",
-    image:
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800",
-  },
-];
+import { homeEvents as events } from "@/data/events";
 
 export default function UpcomingEvents() {
   return (
@@ -97,7 +41,7 @@ export default function UpcomingEvents() {
           {events.map((event) => (
             <div
               key={event.id}
-              className="group overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl"
             >
               {/* Image */}
               <div className="relative h-56 overflow-hidden">
@@ -142,6 +86,7 @@ export default function UpcomingEvents() {
                 >
                   View Details
                   <ArrowUpRight size={20} />
+                  <span className="absolute inset-0" aria-hidden="true" />
                 </Link>
               </div>
             </div>

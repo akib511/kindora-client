@@ -18,6 +18,11 @@ const supportLinks = [
   { name: "Terms & Conditions", href: "/terms" },
 ];
 
+async function CopyrightYear() {
+  "use cache";
+  return new Date().getFullYear();
+}
+
 export default function Footer() {
   return (
     <footer className="bg-[#14221A] px-6 pt-16 text-gray-300">
@@ -118,7 +123,7 @@ export default function Footer() {
         {/* Bottom Footer */}
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 py-7 text-center text-sm text-gray-400 sm:flex-row">
           <p>
-            © {new Date().getFullYear()} Kindora. All rights reserved.
+            © <CopyrightYear /> Kindora. All rights reserved.
           </p>
 
           <p>
