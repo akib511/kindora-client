@@ -1,14 +1,21 @@
 
 
-import HeroSection from '@/components/HeroSection';
+
 import FeaturesSection from '@/components/home/FeaturesSection';
-import React from 'react';
+import HeroSection from '@/components/home/HeroSection';
+import ImpactGallery from '@/components/home/ImpactGallery';
+
+
 
 const page = () => {
   return (
     <div>
       <HeroSection />
       <FeaturesSection />
+     
+      <ImpactGallery />
+      
+      
     </div>
   );
 };
