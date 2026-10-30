@@ -1,6 +1,8 @@
 import { events, getEventById } from "@/data/events";
 import EventDetails from "./event-details";
 
+export const instant = false;
+
 export function generateStaticParams() {
   return events.map((event) => ({ id: event.id }));
 }

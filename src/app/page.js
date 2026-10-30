@@ -11,7 +11,7 @@ import UpcomingEvents from '@/components/home/Upcomming-Event';
 
 const page = () => {
   return (
-    <div>
+    <main>
       <HeroSection />
       <FeaturesSection />
      
@@ -19,7 +19,7 @@ const page = () => {
       <ImpactGallery />
       <Newsletter />
       
-    </div>
+    </main>
   );
 };
 
