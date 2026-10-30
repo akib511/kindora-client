@@ -99,7 +99,6 @@ export default function ManageEventsPage() {
                     src={event.image}
                     alt={event.title}
                     fill
-                    unoptimized
                     className="object-cover"
                   />
 
