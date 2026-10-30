@@ -4,6 +4,7 @@
 import FeaturesSection from '@/components/home/FeaturesSection';
 import HeroSection from '@/components/home/HeroSection';
 import ImpactGallery from '@/components/home/ImpactGallery';
+import Newsletter from '@/components/home/Newsletter';
 import UpcomingEvents from '@/components/home/Upcomming-Event';
 
 
@@ -16,6 +17,7 @@ const page = () => {
      
       <UpcomingEvents />
       <ImpactGallery />
+      <Newsletter />
       
     </div>
   );
