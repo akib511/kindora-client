@@ -1,0 +1,15 @@
+▲ Next.js 16.4.3 (Turbopack)
+- Local:         http://localhost:3100
+- Network:       http://192.168.0.106:3100
+✓ Ready in 802ms
+✓ Running next.config.mjs took 31ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          21392
+- Dir:          C:\Assignment\Social-Development -Events-Platform\kindora-client
+- Log:          .next\dev\logs\next-development.log
+
+You can access the existing server at http://localhost:3000,
+or run taskkill /PID 21392 /F to stop it and start a new one.
+[?25h

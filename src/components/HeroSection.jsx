@@ -22,14 +22,14 @@ export default function HeroSection() {
       <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-32 lg:px-10">
         <div className="max-w-3xl">
           {/* Badge */}
-          <span className="mb-8 inline-flex rounded-full bg-red-600 px-6 py-3 text-sm font-bold uppercase tracking-wider text-white">
+          <span className="mb-8 inline-flex rounded-full bg-green-700 px-6 py-3 text-sm font-bold uppercase tracking-wider text-white">
             Together We Make a Difference
           </span>
 
           {/* Heading */}
           <h1 className="text-4xl font-extrabold leading-[1.15] tracking-tight text-white sm:text-5xl lg:text-7xl">
             Small Acts of Kindness,
-            <span className="mt-1 block text-[#ff6b70]">
+            <span className="mt-1 block text-green-400">
               Big Changes for the World.
             </span>
           </h1>
@@ -45,7 +45,7 @@ export default function HeroSection() {
           <div className="mt-10 flex flex-wrap gap-4">
             <Link
               href="/upcoming-events"
-              className="group inline-flex items-center gap-3 rounded-full bg-red-600 px-8 py-4 font-semibold text-white transition-all duration-300 hover:bg-red-700"
+              className="group inline-flex items-center gap-3 rounded-full bg-green-700 px-8 py-4 font-semibold text-white transition-all duration-300 hover:bg-green-800"
             >
               Explore Events
               <ArrowRight
@@ -56,7 +56,7 @@ export default function HeroSection() {
 
             <Link
               href="/create-event"
-              className="group inline-flex items-center gap-3 rounded-full border border-white/70 px-8 py-4 font-semibold text-white transition-all duration-300 hover:border-red-500 hover:bg-red-600"
+              className="group inline-flex items-center gap-3 rounded-full border border-white/70 px-8 py-4 font-semibold text-white transition-all duration-300 hover:border-green-500 hover:bg-green-700"
             >
               Start an Initiative
               <ArrowRight

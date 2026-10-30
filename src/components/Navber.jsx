@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/theme-toggle";
 import {
   Sheet,
   SheetContent,
@@ -21,7 +22,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-gray-200/60 bg-white/80 backdrop-blur-xl">
+    <header className="fixed top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-10">
 
         {/* Logo */}
@@ -29,7 +30,7 @@ export default function Navbar() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600 text-white transition-transform duration-300 group-hover:scale-105">
             <Heart size={18} strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-extrabold tracking-tight text-gray-900">
+          <span className="text-xl font-extrabold tracking-tight text-foreground">
             Kindora<span className="text-red-600">.</span>
           </span>
         </Link>
@@ -40,60 +41,66 @@ export default function Navbar() {
             <Link
               key={link.name}
               href={link.href}
-              className="text-sm font-medium text-gray-600 transition-colors hover:text-red-600"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-red-600"
             >
               {link.name}
             </Link>
           ))}
         </div>
 
-        {/* Desktop Login */}
-        <div className="hidden md:block">
-          <Button
-            nativeButton={false}
-            render={<Link href="/login" />}
-            className="rounded-md bg-red-600 px-6 font-semibold text-white hover:bg-red-700"
-          >
-            Login
-          </Button>
-        </div>
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
 
-        {/* Mobile Navigation */}
-        <div className="md:hidden">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger
-              render={
-                <Button variant="ghost" size="icon" aria-label="Toggle menu" />
-              }
+          <div className="hidden md:block">
+            <Button
+              nativeButton={false}
+              render={<Link href="/login" />}
+              className="rounded-md bg-red-600 px-6 font-semibold text-white hover:bg-red-700"
             >
-              {open ? <X size={22} /> : <Menu size={22} />}
-            </SheetTrigger>
+              Login
+            </Button>
+          </div>
 
-            <SheetContent side="right" className="w-[280px]">
-              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+          {/* Mobile Navigation */}
+          <div className="md:hidden">
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger
+                render={
+                  <Button variant="ghost" size="icon" aria-label="Toggle menu" />
+                }
+              >
+                {open ? <X size={22} /> : <Menu size={22} />}
+              </SheetTrigger>
 
-              <div className="mt-10 flex flex-col gap-2">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-md px-4 py-3 text-base font-medium text-gray-700 transition hover:bg-gray-100 hover:text-red-600"
+              <SheetContent side="right" className="w-[280px]">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+
+                <div className="mt-10 flex flex-col gap-2">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-4 py-3 text-base font-medium text-foreground/80 transition hover:bg-muted hover:text-red-600"
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+
+                  <Button
+                    nativeButton={false}
+                    render={
+                      <Link href="/login" onClick={() => setOpen(false)} />
+                    }
+                    className="mt-4 rounded-md bg-red-600 font-semibold text-white hover:bg-red-700"
                   >
-                    {link.name}
-                  </Link>
-                ))}
-
-                <Button
-                  nativeButton={false}
-                  render={<Link href="/login" onClick={() => setOpen(false)} />}
-                  className="mt-4 rounded-md bg-red-600 font-semibold text-white hover:bg-red-700"
-                >
-                  Login
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+                    Login
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
 
       </nav>
