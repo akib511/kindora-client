@@ -3,12 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  CalendarDays,
-  MapPin,
-  ArrowRight,
-  CalendarCheck,
-} from "lucide-react";
+import { CalendarDays, MapPin, ArrowRight, CalendarCheck } from "lucide-react";
 
 const joinedEvents = [
   {
@@ -17,8 +12,7 @@ const joinedEvents = [
     category: "Environment",
     date: "2026-11-15",
     location: "Central Park, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
   },
   {
     id: 2,
@@ -26,8 +20,7 @@ const joinedEvents = [
     category: "Community Support",
     date: "2026-11-20",
     location: "Mirpur, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800",
+    image: "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800",
   },
   {
     id: 3,
@@ -35,8 +28,7 @@ const joinedEvents = [
     category: "Environment",
     date: "2026-11-25",
     location: "Dhanmondi, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800",
+    image: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800",
   },
 ];
 
@@ -46,7 +38,6 @@ export default function JoinedEventsPage() {
   return (
     <main className="min-h-screen bg-background px-4 py-12 md:px-8">
       <div className="mx-auto max-w-6xl">
-
         {/* Header */}
         <div className="mb-10">
           <p className="mb-2 text-sm font-semibold text-green-700 dark:text-green-400">
@@ -69,9 +60,7 @@ export default function JoinedEventsPage() {
           </div>
 
           <div>
-            <p className="text-sm text-muted-foreground">
-              Total Joined Events
-            </p>
+            <p className="text-sm text-muted-foreground">Total Joined Events</p>
 
             <h2 className="text-2xl font-bold text-foreground">
               {events.length}
@@ -155,8 +144,8 @@ export default function JoinedEventsPage() {
             </h2>
 
             <p className="mb-6 mt-2 text-muted-foreground">
-              You have not joined any events yet. Explore upcoming events
-              and become part of something meaningful.
+              You have not joined any events yet. Explore upcoming events and
+              become part of something meaningful.
             </p>
 
             <Link
