@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,24 +13,27 @@ import {
   Clock,
   Heart,
   Share2,
+  CheckCircle2,
 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 export default function EventDetails({ id, event: initialEvent }) {
   const router = useRouter();
+  const { data: session } = authClient.useSession();
 
   const [event, setEvent] = useState(initialEvent ?? null);
   const [isJoined, setIsJoined] = useState(false);
+  const [checkingJoined, setCheckingJoined] = useState(true);
   const [joining, setJoining] = useState(false);
   const [loading, setLoading] = useState(!initialEvent);
   const [error, setError] = useState(false);
 
+  // ✅ Real user email from session
+  const userEmail = session?.user?.email;
 
-  const userEmail = "test@example.com";
-
+  // Load event if not passed
   useEffect(() => {
-    if (initialEvent) {
-      return;
-    }
+    if (initialEvent) return;
 
     const getEventDetails = async () => {
       try {
@@ -60,11 +62,49 @@ export default function EventDetails({ id, event: initialEvent }) {
     getEventDetails();
   }, [id, initialEvent]);
 
-  const handleJoin = async () => {
-    if (!event?._id) {
-      toast.error("Event information is missing.");
+  // ✅ Check if already joined
+  useEffect(() => {
+    if (!userEmail || !event?._id) {
+      setCheckingJoined(false);
       return;
     }
+
+    const checkJoined = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/joined-events/${encodeURIComponent(
+            userEmail
+          )}`
+        );
+
+        if (res.ok) {
+          const joined = await res.json();
+          const already = Array.isArray(joined)
+            ? joined.some(
+                (item) => String(item.eventId) === String(event._id)
+              )
+            : false;
+          setIsJoined(already);
+        }
+      } catch (err) {
+        console.error("Failed to check joined status:", err);
+      } finally {
+        setCheckingJoined(false);
+      }
+    };
+
+    checkJoined();
+  }, [userEmail, event?._id]);
+
+  const handleJoin = async () => {
+    // ✅ Login check
+    if (!userEmail) {
+      toast.error("Please login to join this event!");
+      router.push("/login");
+      return;
+    }
+
+    if (!event?._id || isJoined || joining) return;
 
     try {
       setJoining(true);
@@ -76,19 +116,30 @@ export default function EventDetails({ id, event: initialEvent }) {
         },
         body: JSON.stringify({
           eventId: event._id,
-          userEmail: userEmail,
+          userEmail,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        // 409 = already joined
+        if (response.status === 409) {
+          setIsJoined(true);
+          toast.info("You already joined this event.");
+          return;
+        }
         toast.error(data.message || "Failed to join this event.");
         return;
       }
 
       setIsJoined(true);
       toast.success("Successfully joined the event!");
+
+      // ✅ Event count refresh (participants update)
+      setEvent((prev) =>
+        prev ? { ...prev, participants: (prev.participants || 0) + 1 } : prev
+      );
     } catch (error) {
       console.error("Join Event Error:", error);
       toast.error("Something went wrong. Please try again.");
@@ -174,13 +225,11 @@ export default function EventDetails({ id, event: initialEvent }) {
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="flex items-center gap-3">
-                  <CalendarDays className="text-green-700 dark:text-green-400" />
-
+                  <CalendarDays className="shrink-0 text-green-700 dark:text-green-400" />
                   <div>
                     <p className="text-xs text-muted-foreground">
                       Event Date
                     </p>
-
                     <p className="text-sm font-semibold text-foreground">
                       {event.date}
                     </p>
@@ -188,13 +237,11 @@ export default function EventDetails({ id, event: initialEvent }) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Clock className="text-green-700 dark:text-green-400" />
-
+                  <Clock className="shrink-0 text-green-700 dark:text-green-400" />
                   <div>
                     <p className="text-xs text-muted-foreground">
                       Event Time
                     </p>
-
                     <p className="text-sm font-semibold text-foreground">
                       {event.time || "Not specified"}
                     </p>
@@ -202,13 +249,11 @@ export default function EventDetails({ id, event: initialEvent }) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <MapPin className="text-green-700 dark:text-green-400" />
-
+                  <MapPin className="shrink-0 text-green-700 dark:text-green-400" />
                   <div>
                     <p className="text-xs text-muted-foreground">
                       Location
                     </p>
-
                     <p className="text-sm font-semibold text-foreground">
                       {event.location}
                     </p>
@@ -216,13 +261,11 @@ export default function EventDetails({ id, event: initialEvent }) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Users className="text-green-700 dark:text-green-400" />
-
+                  <Users className="shrink-0 text-green-700 dark:text-green-400" />
                   <div>
                     <p className="text-xs text-muted-foreground">
                       Participants
                     </p>
-
                     <p className="text-sm font-semibold text-foreground">
                       {event.participants || 0} People
                     </p>
@@ -247,30 +290,43 @@ export default function EventDetails({ id, event: initialEvent }) {
                 <p className="text-sm text-muted-foreground">
                   Organized by
                 </p>
-
                 <p className="mt-1 font-semibold text-green-800 dark:text-green-300">
                   {event.organizer || "Kindora Community"}
                 </p>
               </div>
 
               <button
+                type="button"
                 onClick={handleJoin}
-                disabled={isJoined || joining}
+                disabled={isJoined || joining || checkingJoined}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3.5 font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-green-700/60 dark:bg-green-600 dark:hover:bg-green-700 dark:disabled:bg-green-600/50"
               >
-                <Heart size={18} />
-
-                {joining
-                  ? "Joining..."
-                  : isJoined
-                    ? "Already Joined"
-                    : "Join This Event"}
+                {checkingJoined ? (
+                  "Checking..."
+                ) : isJoined ? (
+                  <>
+                    <CheckCircle2 size={18} />
+                    Already Joined
+                  </>
+                ) : joining ? (
+                  "Joining..."
+                ) : (
+                  <>
+                    <Heart size={18} />
+                    Join This Event
+                  </>
+                )}
               </button>
 
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  toast.success("Event link copied!");
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    toast.success("Event link copied!");
+                  } catch {
+                    toast.error("Failed to copy link.");
+                  }
                 }}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border py-3 font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
               >

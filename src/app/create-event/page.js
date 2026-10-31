@@ -1,6 +1,5 @@
-
 "use client";
-
+import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -34,6 +33,7 @@ const iconClass =
 
 export default function CreateEventPage() {
   const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -58,15 +58,28 @@ export default function CreateEventPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!session?.user) {
+      toast.error("Please login first!");
+      router.push("/login");
+      return;
+    }
+
     try {
       setLoading(true);
+
+      // ✅ FIX: creatorEmail + creatorName add koro
+      const eventData = {
+        ...formData,
+        creatorEmail: session.user.email,
+        creatorName: session.user.name,
+      };
 
       const response = await fetch("http://localhost:5000/events", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(eventData), 
       });
 
       const result = await response.json();
@@ -97,7 +110,6 @@ export default function CreateEventPage() {
   return (
     <main className="min-h-screen bg-background px-4 py-16">
       <div className="mx-auto max-w-3xl">
-        {/* Page header */}
         <div className="mb-10 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[3px] text-green-700 dark:text-green-400">
             Make a Difference
@@ -113,7 +125,6 @@ export default function CreateEventPage() {
           </p>
         </div>
 
-        {/* Form card */}
         <div className="rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-sm md:p-10">
           <div className="mb-6 border-b border-border pb-4">
             <h2 className="text-lg font-bold text-foreground">
@@ -125,7 +136,6 @@ export default function CreateEventPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Event Title */}
             <div>
               <label htmlFor="title" className={labelClass}>
                 Title <span className="text-green-700 dark:text-green-400">*</span>
@@ -146,7 +156,6 @@ export default function CreateEventPage() {
               </div>
             </div>
 
-            {/* Category + Date */}
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label htmlFor="category" className={labelClass}>
@@ -189,7 +198,7 @@ export default function CreateEventPage() {
                     value={formData.date}
                     onFocus={(e) => {
                       e.currentTarget.min = new Date().toLocaleDateString(
-                        "en-CA",
+                        "en-CA"
                       );
                     }}
                     onChange={handleChange}
@@ -200,7 +209,6 @@ export default function CreateEventPage() {
               </div>
             </div>
 
-            {/* Location */}
             <div>
               <label htmlFor="location" className={labelClass}>
                 Location{" "}
@@ -222,7 +230,6 @@ export default function CreateEventPage() {
               </div>
             </div>
 
-            {/* Image URL */}
             <div>
               <label htmlFor="image" className={labelClass}>
                 Thumbnail Image URL{" "}
@@ -244,7 +251,6 @@ export default function CreateEventPage() {
               </div>
             </div>
 
-            {/* Description */}
             <div>
               <label htmlFor="description" className={labelClass}>
                 Description{" "}
@@ -270,7 +276,6 @@ export default function CreateEventPage() {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -285,4 +290,3 @@ export default function CreateEventPage() {
     </main>
   );
 }
-

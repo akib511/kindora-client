@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   User,
   Mail,
@@ -12,22 +13,83 @@ import {
   MapPin,
   X,
 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
+  const router = useRouter();
+
+  const { data: session, isPending } = authClient.useSession();
+
   const [user, setUser] = useState({
-    name: "Shahariar Hossen Akib",
-    email: "akib@example.com",
+    name: "",
+    email: "",
     photoURL: "",
     location: "Dhaka, Bangladesh",
   });
 
   const [showModal, setShowModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [editForm, setEditForm] = useState({
-    name: user.name,
-    photoURL: user.photoURL,
-    location: user.location,
+    name: "",
+    photoURL: "",
+    location: "",
   });
+
+  const [createdEvents, setCreatedEvents] = useState(0);
+  const [joinedEvents, setJoinedEvents] = useState(0);
+
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const currentUser = session.user;
+
+    setUser((previousUser) => ({
+      ...previousUser,
+      name: currentUser.name || "",
+      email: currentUser.email || "",
+      photoURL: currentUser.image || "",
+    }));
+
+    setEditForm({
+      name: currentUser.name || "",
+      photoURL: currentUser.image || "",
+      location: "Dhaka, Bangladesh",
+    });
+
+    const loadStatistics = async () => {
+      try {
+        const [eventsResponse, joinedResponse] = await Promise.all([
+          fetch("http://localhost:5000/events"),
+          fetch(
+            `http://localhost:5000/joined-events/${encodeURIComponent(
+              currentUser.email
+            )}`
+          ),
+        ]);
+
+        if (eventsResponse.ok) {
+          const events = await eventsResponse.json();
+
+          const myEvents = events.filter(
+            (event) => event.creatorEmail === currentUser.email
+          );
+
+          setCreatedEvents(myEvents.length);
+        }
+
+        if (joinedResponse.ok) {
+          const joinedData = await joinedResponse.json();
+          setJoinedEvents(joinedData.length);
+        }
+      } catch (error) {
+        console.error("Failed to load profile statistics:", error);
+      }
+    };
+
+    loadStatistics();
+  }, [session]);
 
   const handleEdit = () => {
     setEditForm({
@@ -48,21 +110,74 @@ export default function ProfilePage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setUser({
-      ...user,
-      ...editForm,
-    });
+    setIsSaving(true);
 
-    setShowModal(false);
+    try {
+      const result = await authClient.updateUser({
+        name: editForm.name,
+        image: editForm.photoURL || null,
+      });
+
+      if (result.error) {
+        toast.error(result.error.message || "Failed to update profile.");
+        return;
+      }
+
+      setUser({
+        ...user,
+        name: editForm.name,
+        photoURL: editForm.photoURL,
+        location: editForm.location,
+      });
+
+      setShowModal(false);
+
+      toast.success("Profile updated successfully!");
+
+      router.refresh();
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isPending) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Loading profile...</p>
+      </main>
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
+        <h2 className="text-2xl font-bold text-foreground">
+          Please Login First
+        </h2>
+
+        <p className="text-center text-muted-foreground">
+          You need to login to view your profile.
+        </p>
+
+        <Link
+          href="/login"
+          className="rounded-xl bg-green-700 px-6 py-3 font-medium text-white transition hover:bg-green-800"
+        >
+          Go to Login
+        </Link>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background px-4 py-12 md:px-8">
       <div className="mx-auto max-w-5xl">
-
         {/* Back Button */}
         <Link
           href="/"
@@ -89,15 +204,12 @@ export default function ProfilePage() {
 
         {/* Profile Card */}
         <div className="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
-
           {/* Cover */}
           <div className="h-36 bg-gradient-to-r from-green-800 to-green-500" />
 
           <div className="px-6 pb-10 md:px-10">
-
             {/* Profile Image + Edit */}
             <div className="-mt-14 mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
@@ -134,7 +246,6 @@ export default function ProfilePage() {
 
             {/* Statistics */}
             <div className="mb-10 grid grid-cols-1 gap-5 sm:grid-cols-2">
-
               <div className="flex items-center gap-4 rounded-2xl bg-green-50 p-6 dark:bg-green-500/10">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400">
                   <CalendarDays size={25} />
@@ -145,7 +256,7 @@ export default function ProfilePage() {
                     Created Events
                   </p>
                   <h3 className="text-2xl font-bold text-foreground">
-                    03
+                    {String(createdEvents).padStart(2, "0")}
                   </h3>
                 </div>
               </div>
@@ -160,11 +271,10 @@ export default function ProfilePage() {
                     Joined Events
                   </p>
                   <h3 className="text-2xl font-bold text-foreground">
-                    05
+                    {String(joinedEvents).padStart(2, "0")}
                   </h3>
                 </div>
               </div>
-
             </div>
 
             {/* Account Info */}
@@ -174,14 +284,15 @@ export default function ProfilePage() {
               </h3>
 
               <div className="space-y-4">
-
                 <div className="flex items-center gap-4 rounded-xl border border-border p-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400">
                     <User size={20} />
                   </div>
 
                   <div>
-                    <p className="text-xs text-muted-foreground">Full Name</p>
+                    <p className="text-xs text-muted-foreground">
+                      Full Name
+                    </p>
                     <p className="text-sm font-medium text-foreground">
                       {user.name}
                     </p>
@@ -194,7 +305,9 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <p className="text-xs text-muted-foreground">Email Address</p>
+                    <p className="text-xs text-muted-foreground">
+                      Email Address
+                    </p>
                     <p className="text-sm font-medium text-foreground">
                       {user.email}
                     </p>
@@ -207,16 +320,16 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <p className="text-xs text-muted-foreground">Location</p>
+                    <p className="text-xs text-muted-foreground">
+                      Location
+                    </p>
                     <p className="text-sm font-medium text-foreground">
                       {user.location}
                     </p>
                   </div>
                 </div>
-
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -224,9 +337,7 @@ export default function ProfilePage() {
       {/* Edit Profile Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-xl">
-
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-foreground">
                 Edit Profile
@@ -243,7 +354,6 @@ export default function ProfilePage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-
               <div>
                 <label className="mb-2 block text-sm font-medium text-foreground">
                   Full Name
@@ -290,22 +400,22 @@ export default function ProfilePage() {
               </div>
 
               <div className="flex gap-3 pt-3">
-
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 rounded-xl border border-border py-3 font-medium text-muted-foreground transition hover:bg-accent"
+                  disabled={isSaving}
+                  className="flex-1 rounded-xl border border-border py-3 font-medium text-muted-foreground transition hover:bg-accent disabled:opacity-50"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-green-700 py-3 font-medium text-white transition-colors hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
+                  disabled={isSaving}
+                  className="flex-1 rounded-xl bg-green-700 py-3 font-medium text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-600 dark:hover:bg-green-700"
                 >
-                  Save Changes
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </button>
-
               </div>
             </form>
           </div>
