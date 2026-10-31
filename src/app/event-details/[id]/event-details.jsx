@@ -1,9 +1,11 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   CalendarDays,
   MapPin,
@@ -19,8 +21,12 @@ export default function EventDetails({ id, event: initialEvent }) {
 
   const [event, setEvent] = useState(initialEvent ?? null);
   const [isJoined, setIsJoined] = useState(false);
+  const [joining, setJoining] = useState(false);
   const [loading, setLoading] = useState(!initialEvent);
   const [error, setError] = useState(false);
+
+
+  const userEmail = "test@example.com";
 
   useEffect(() => {
     if (initialEvent) {
@@ -30,6 +36,7 @@ export default function EventDetails({ id, event: initialEvent }) {
     const getEventDetails = async () => {
       try {
         setLoading(true);
+        setError(false);
 
         const response = await fetch(
           `http://localhost:5000/events/${id}`
@@ -53,16 +60,41 @@ export default function EventDetails({ id, event: initialEvent }) {
     getEventDetails();
   }, [id, initialEvent]);
 
-  const handleJoin = () => {
-    // Authentication will be added later.
-    const isLoggedIn = false;
-
-    if (!isLoggedIn) {
-      router.push("/login");
+  const handleJoin = async () => {
+    if (!event?._id) {
+      toast.error("Event information is missing.");
       return;
     }
 
-    setIsJoined(true);
+    try {
+      setJoining(true);
+
+      const response = await fetch("http://localhost:5000/join-event", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: event._id,
+          userEmail: userEmail,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || "Failed to join this event.");
+        return;
+      }
+
+      setIsJoined(true);
+      toast.success("Successfully joined the event!");
+    } catch (error) {
+      console.error("Join Event Error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setJoining(false);
+    }
   };
 
   if (loading) {
@@ -223,16 +255,22 @@ export default function EventDetails({ id, event: initialEvent }) {
 
               <button
                 onClick={handleJoin}
-                disabled={isJoined}
+                disabled={isJoined || joining}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3.5 font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-green-700/60 dark:bg-green-600 dark:hover:bg-green-700 dark:disabled:bg-green-600/50"
               >
                 <Heart size={18} />
-                {isJoined ? "Already Joined" : "Join This Event"}
+
+                {joining
+                  ? "Joining..."
+                  : isJoined
+                    ? "Already Joined"
+                    : "Join This Event"}
               </button>
 
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
+                  toast.success("Event link copied!");
                 }}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border py-3 font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
               >

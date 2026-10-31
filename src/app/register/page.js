@@ -2,11 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, UserPlus, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 export default function RegisterPage() {
+  const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -25,26 +31,50 @@ export default function RegisterPage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (formData.password.length < 6) {
-      return alert("Password must be at least 6 characters.");
+      return toast.error("Password must be at least 6 characters.");
     }
 
     if (!/[A-Z]/.test(formData.password)) {
-      return alert("Password must contain an uppercase letter.");
+      return toast.error("Password must contain an uppercase letter.");
     }
 
     if (!/[a-z]/.test(formData.password)) {
-      return alert("Password must contain a lowercase letter.");
+      return toast.error("Password must contain a lowercase letter.");
     }
 
     if (formData.password !== formData.confirmPassword) {
-      return alert("Passwords do not match.");
+      return toast.error("Passwords do not match.");
     }
 
-    console.log("Register form data:", formData);
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await authClient.signUp.email({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        image: formData.photoURL,
+      });
+
+      if (error) {
+        toast.error(error.message || "Registration failed.");
+        return;
+      }
+
+      if (data) {
+        toast.success("Account created successfully!");
+
+        router.push("/login");
+      }
+    } catch (error) {
+      toast.error(error.message || "Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -82,6 +112,7 @@ export default function RegisterPage() {
               <label className="mb-2 block text-sm font-medium text-foreground">
                 Full Name
               </label>
+
               <input
                 type="text"
                 name="name"
@@ -98,6 +129,7 @@ export default function RegisterPage() {
               <label className="mb-2 block text-sm font-medium text-foreground">
                 Email Address
               </label>
+
               <input
                 type="email"
                 name="email"
@@ -114,6 +146,7 @@ export default function RegisterPage() {
               <label className="mb-2 block text-sm font-medium text-foreground">
                 Photo URL
               </label>
+
               <input
                 type="url"
                 name="photoURL"
@@ -196,9 +229,10 @@ export default function RegisterPage() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full rounded-xl bg-green-700 py-3 font-semibold text-white transition-colors hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
+              disabled={isLoading}
+              className="w-full rounded-xl bg-green-700 py-3 font-semibold text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-600 dark:hover:bg-green-700"
             >
-              Create Account
+              {isLoading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
 
@@ -207,6 +241,7 @@ export default function RegisterPage() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border"></div>
             </div>
+
             <div className="relative flex justify-center">
               <span className="bg-card px-4 text-sm text-muted-foreground">
                 OR
