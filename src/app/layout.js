@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 import Navbar from "@/components/home/Navber";
 import ThemeProvider from "@/components/theme-provider";
@@ -34,7 +35,9 @@ export default function RootLayout({ children }) {
           disableTransitionOnChange
         >
           <Navbar />
-          <div className="flex-1">{children}</div>
+          <div className="flex-1">{children}
+            <Toaster position="top-right" richColors />
+          </div>
           <Footer />
         </ThemeProvider>
       </body>

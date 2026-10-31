@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   MapPin,
@@ -10,6 +12,7 @@ import {
   Tag,
   FileText,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const categories = [
   "Environment",
@@ -30,6 +33,8 @@ const iconClass =
   "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground";
 
 export default function CreateEventPage() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -38,6 +43,8 @@ export default function CreateEventPage() {
     location: "",
     date: "",
   });
+
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,15 +55,48 @@ export default function CreateEventPage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+
+    try {
+      setLoading(true);
+
+      const response = await fetch("http://localhost:5000/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to create event");
+      }
+
+      toast.success("Event created successfully!");
+
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        image: "",
+        location: "",
+        date: "",
+      });
+
+      router.push("/upcoming-events");
+    } catch (error) {
+      toast.error(error.message || "Something went wrong!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main className="min-h-screen bg-background px-4 py-16">
       <div className="mx-auto max-w-3xl">
-
         {/* Page header */}
         <div className="mb-10 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[3px] text-green-700 dark:text-green-400">
@@ -75,8 +115,6 @@ export default function CreateEventPage() {
 
         {/* Form card */}
         <div className="rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-sm md:p-10">
-
-          {/* Card section label */}
           <div className="mb-6 border-b border-border pb-4">
             <h2 className="text-lg font-bold text-foreground">
               Event Details
@@ -87,12 +125,12 @@ export default function CreateEventPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-
             {/* Event Title */}
             <div>
               <label htmlFor="title" className={labelClass}>
                 Title <span className="text-green-700 dark:text-green-400">*</span>
               </label>
+
               <div className="relative">
                 <Type size={18} className={iconClass} />
                 <input
@@ -115,6 +153,7 @@ export default function CreateEventPage() {
                   Event Type{" "}
                   <span className="text-green-700 dark:text-green-400">*</span>
                 </label>
+
                 <div className="relative">
                   <Tag size={18} className={iconClass} />
                   <select
@@ -140,6 +179,7 @@ export default function CreateEventPage() {
                   Event Date{" "}
                   <span className="text-green-700 dark:text-green-400">*</span>
                 </label>
+
                 <div className="relative">
                   <CalendarDays size={18} className={iconClass} />
                   <input
@@ -147,12 +187,8 @@ export default function CreateEventPage() {
                     type="date"
                     name="date"
                     value={formData.date}
+                    min={new Date().toLocaleDateString("en-CA")}
                     onChange={handleChange}
-                    onFocus={(e) => {
-                      e.currentTarget.min = new Date().toLocaleDateString(
-                        "en-CA",
-                      );
-                    }}
                     required
                     className={`${inputClass} dark:[color-scheme:dark]`}
                   />
@@ -166,6 +202,7 @@ export default function CreateEventPage() {
                 Location{" "}
                 <span className="text-green-700 dark:text-green-400">*</span>
               </label>
+
               <div className="relative">
                 <MapPin size={18} className={iconClass} />
                 <input
@@ -187,6 +224,7 @@ export default function CreateEventPage() {
                 Thumbnail Image URL{" "}
                 <span className="text-green-700 dark:text-green-400">*</span>
               </label>
+
               <div className="relative">
                 <ImagePlus size={18} className={iconClass} />
                 <input
@@ -208,11 +246,13 @@ export default function CreateEventPage() {
                 Description{" "}
                 <span className="text-green-700 dark:text-green-400">*</span>
               </label>
+
               <div className="relative">
                 <FileText
                   size={18}
                   className="pointer-events-none absolute left-4 top-4 text-muted-foreground"
                 />
+
                 <textarea
                   id="description"
                   name="description"
@@ -229,10 +269,11 @@ export default function CreateEventPage() {
             {/* Submit */}
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-6 py-4 font-semibold text-white shadow-sm transition hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-6 py-4 font-semibold text-white shadow-sm transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-600 dark:hover:bg-green-700"
             >
               <Send size={18} />
-              Create Event
+              {loading ? "Creating Event..." : "Create Event"}
             </button>
           </form>
         </div>
@@ -240,3 +281,4 @@ export default function CreateEventPage() {
     </main>
   );
 }
+

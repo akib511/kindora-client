@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search, MapPin, CalendarDays, ArrowRight } from "lucide-react";
-import { upcomingEvents as events } from "@/data/events";
 
 const categories = [
   "All",
@@ -16,8 +15,30 @@ const categories = [
 ];
 
 export default function UpcomingEventsPage() {
+  const [events, setEvents] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Get Events from Backend
+  useEffect(() => {
+    fetch("http://localhost:5000/events")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch events");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setEvents(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        setError(error.message);
+        setLoading(false);
+      });
+  }, []);
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch = event.title
@@ -102,12 +123,27 @@ export default function UpcomingEventsPage() {
           </p>
         </div>
 
-        {/* Event grid */}
-        {filteredEvents.length > 0 ? (
+        {/* Loading */}
+        {loading ? (
+          <div className="py-20 text-center text-muted-foreground">
+            Loading events...
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-border bg-card py-20 text-center">
+            <h3 className="text-xl font-semibold text-red-600">
+              Failed to load events
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {error}
+            </p>
+          </div>
+        ) : filteredEvents.length > 0 ? (
+
+          /* Event grid */
           <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
             {filteredEvents.map((event) => (
               <div
-                key={event.id}
+                key={event._id}
                 className="group relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="relative h-56 overflow-hidden">
@@ -148,7 +184,7 @@ export default function UpcomingEventsPage() {
                   </div>
 
                   <Link
-                    href={`/event-details/${event.id}`}
+                    href={`/event-details/${event._id}`}
                     className="mt-6 flex items-center justify-between border-t border-border pt-5 text-sm font-semibold text-green-700 transition hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                   >
                     View Details
@@ -159,6 +195,7 @@ export default function UpcomingEventsPage() {
               </div>
             ))}
           </div>
+
         ) : (
           <div className="rounded-2xl border border-border bg-card py-20 text-center">
             <h3 className="text-xl font-semibold text-foreground">
@@ -169,6 +206,7 @@ export default function UpcomingEventsPage() {
             </p>
           </div>
         )}
+
       </section>
     </main>
   );
