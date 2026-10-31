@@ -60,7 +60,7 @@ export default function UpcomingEventsPage() {
           Make a Difference
         </p>
 
-        <h1 className="text-4xl font-bold md:text-5xl">
+        <h1 className="text-3xl font-bold sm:text-4xl md:text-5xl">
           Upcoming Events
         </h1>
 
@@ -70,22 +70,22 @@ export default function UpcomingEventsPage() {
         </p>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16">
+      <section className="mx-auto max-w-6xl px-4 py-12 md:py-16">
 
         {/* Header + Search */}
-        <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between md:mb-10">
           <div>
             <h2 className="text-2xl font-bold text-foreground">
               Explore Events
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-1.5 text-sm text-muted-foreground">
               Find an event and join the movement.
             </p>
           </div>
 
           <div className="relative w-full md:max-w-sm">
             <Search
-              size={19}
+              size={18}
               className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
 
@@ -94,18 +94,18 @@ export default function UpcomingEventsPage() {
               placeholder="Search events..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card py-3 pl-11 pr-4 text-sm text-foreground outline-none transition focus:border-green-600 dark:focus:border-green-400"
+              className="w-full rounded-xl border border-border bg-card py-2.5 pl-11 pr-4 text-sm text-foreground outline-none transition focus:border-green-600 dark:focus:border-green-400"
             />
           </div>
         </div>
 
         {/* Category chips */}
-        <div className="mb-10 flex flex-wrap gap-3">
+        <div className="mb-8 flex flex-wrap gap-2.5 md:mb-10 md:gap-3">
           {categories.map((item) => (
             <button
               key={item}
               onClick={() => setCategory(item)}
-              className={`rounded-full px-5 py-2.5 text-sm font-medium transition ${
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition sm:px-5 sm:py-2.5 sm:text-sm ${
                 category === item
                   ? "bg-green-800 text-white dark:bg-green-600"
                   : "border border-border bg-card text-muted-foreground hover:border-green-600 hover:text-green-700 dark:hover:border-green-400 dark:hover:text-green-400"
@@ -117,8 +117,8 @@ export default function UpcomingEventsPage() {
         </div>
 
         {/* Count */}
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+        <div className="mb-5 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted-foreground sm:text-sm">
             Showing {filteredEvents.length} events
           </p>
         </div>
@@ -139,58 +139,63 @@ export default function UpcomingEventsPage() {
           </div>
         ) : filteredEvents.length > 0 ? (
 
-          /* Event grid */
-          <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+          /* Event grid - Mobile e 1 col, tab e 2, desktop e 3 */
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {filteredEvents.map((event) => (
               <div
                 key={event._id}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className="relative h-56 overflow-hidden">
+                {/* Image - Compact Height */}
+                <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-52">
                   <Image
                     src={event.image}
                     alt={event.title}
                     fill
                     unoptimized
-                    className="object-cover transition duration-500 group-hover:scale-110"
+                    className="object-cover transition duration-500 group-hover:scale-105"
                   />
 
-                  <span className="absolute left-4 top-4 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-green-700 shadow-sm dark:bg-neutral-900 dark:text-green-400">
+                  <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-green-700 shadow-sm backdrop-blur-sm dark:bg-neutral-900/95 dark:text-green-400 sm:left-4 sm:top-4 sm:text-xs">
                     {event.category}
                   </span>
                 </div>
 
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-foreground">
+                {/* Content */}
+                <div className="flex flex-1 flex-col p-4 sm:p-5">
+                  <h3 className="mb-2 line-clamp-2 text-base font-bold leading-snug text-foreground sm:text-lg">
                     {event.title}
                   </h3>
 
-                  <div className="mt-5 space-y-3 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2">
+                  <div className="mb-4 space-y-2 text-xs text-muted-foreground sm:text-sm">
+                    <p className="flex items-center gap-1.5">
                       <CalendarDays
-                        size={17}
-                        className="shrink-0 text-green-700 dark:text-green-400"
+                        size={14}
+                        className="shrink-0 text-green-700 dark:text-green-400 sm:h-4 sm:w-4"
                       />
                       {event.date}
                     </p>
 
-                    <p className="flex items-center gap-2">
+                    <p className="flex items-start gap-1.5">
                       <MapPin
-                        size={17}
-                        className="shrink-0 text-green-700 dark:text-green-400"
+                        size={14}
+                        className="mt-0.5 shrink-0 text-green-700 dark:text-green-400 sm:h-4 sm:w-4"
                       />
-                      {event.location}
+                      <span className="line-clamp-1">{event.location}</span>
                     </p>
                   </div>
 
-                  <Link
-                    href={`/event-details/${event._id}`}
-                    className="mt-6 flex items-center justify-between border-t border-border pt-5 text-sm font-semibold text-green-700 transition hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                  >
-                    View Details
-                    <ArrowRight size={18} />
-                    <span className="absolute inset-0" aria-hidden="true" />
-                  </Link>
+                  {/* View Details - Niche align thakbe */}
+                  <div className="mt-auto border-t border-border pt-3 sm:pt-4">
+                    <Link
+                      href={`/event-details/${event._id}`}
+                      className="flex items-center justify-between text-xs font-semibold text-green-700 transition hover:text-green-900 sm:text-sm dark:text-green-400 dark:hover:text-green-300"
+                    >
+                      View Details
+                      <ArrowRight className="h-4 w-4" />
+                      <span className="absolute inset-0" aria-hidden="true" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

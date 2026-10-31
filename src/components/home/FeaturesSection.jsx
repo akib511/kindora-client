@@ -42,63 +42,64 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="bg-background px-6 py-24 text-foreground">
-      <div className="mx-auto max-w-7xl">
+    <section className="bg-background px-4 py-16 text-foreground sm:px-6 md:py-24">
+      <div className="mx-auto max-w-6xl">
 
         {/* Section Heading */}
-        <div className="mx-auto mb-14 max-w-2xl text-center">
-          <span className="mb-4 inline-block rounded-full bg-green-100 px-5 py-2 text-sm font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-400">
+        <div className="mx-auto mb-10 max-w-2xl text-center md:mb-14">
+          <span className="mb-4 inline-block rounded-full bg-green-100 px-4 py-1.5 text-xs font-semibold text-green-700 sm:px-5 sm:py-2 sm:text-sm dark:bg-green-500/15 dark:text-green-400">
             WHAT WE DO
           </span>
 
-          <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl md:text-4xl lg:text-5xl">
             Making Kindness
             <span className="text-green-700 dark:text-green-400">
               {" "}Simple & Meaningful
             </span>
           </h2>
 
-          <p className="mt-5 text-base leading-7 text-muted-foreground">
+          <p className="mt-3 text-sm leading-6 text-muted-foreground sm:mt-5 sm:text-base sm:leading-7">
             Everything you need to turn your good intentions into meaningful
             actions and build a stronger community.
           </p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Feature Cards - Mobile e 2 columns */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {features.map((feature, index) => {
             const Icon = feature.icon;
 
             return (
               <div
                 key={feature.title}
-                className="group rounded-2xl border border-border bg-card p-7 text-card-foreground shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                className="group flex flex-col justify-between rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-6 lg:p-7 sm:hover:-translate-y-2"
               >
-                {/* Icon */}
-                <div
-                  className={`mb-7 flex h-14 w-14 items-center justify-center rounded-2xl ${feature.color}`}
-                >
-                  <Icon size={27} />
+                <div>
+                  {/* Icon - Mobile e choto */}
+                  <div
+                    className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl sm:mb-6 sm:h-14 sm:w-14 sm:rounded-2xl ${feature.color}`}
+                  >
+                    <Icon className="h-5 w-5 sm:h-7 sm:w-7" />
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="mb-1.5 text-sm font-bold leading-tight text-foreground sm:mb-3 sm:text-lg md:text-xl">
+                    {feature.title}
+                  </h3>
+
+                  <p className="text-[11px] leading-relaxed text-muted-foreground sm:text-sm sm:leading-7">
+                    {feature.description}
+                  </p>
                 </div>
 
-                {/* Content */}
-                <h3 className="mb-3 text-xl font-bold text-foreground">
-                  {feature.title}
-                </h3>
-
-                <p className="text-sm leading-7 text-muted-foreground">
-                  {feature.description}
-                </p>
-
                 {/* Bottom Arrow */}
-                <div className="mt-6 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-muted-foreground/70">
+                <div className="mt-4 flex items-center justify-between sm:mt-6">
+                  <span className="text-[10px] font-semibold text-muted-foreground/70 sm:text-xs">
                     0{index + 1}
                   </span>
 
                   <ArrowUpRight
-                    size={20}
-                    className="text-muted-foreground transition-all duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-green-700 dark:group-hover:text-green-400"
+                    className="h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-green-700 sm:h-5 sm:w-5 dark:group-hover:text-green-400"
                   />
                 </div>
               </div>

@@ -26,7 +26,7 @@ async function CopyrightYear() {
 export default function Footer() {
   return (
     <footer className="bg-[#14221A] px-6 pt-16 text-gray-300">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-6xl">
         <div className="grid gap-12 pb-14 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
