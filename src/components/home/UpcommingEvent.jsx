@@ -15,7 +15,7 @@ export default function UpcomingEvents() {
         setLoading(true);
 
         const response = await fetch("http://localhost:5000/recent-events", {
-          cache: "no-store",  // ✅ cache bypass
+          cache: "no-store",
         });
 
         if (!response.ok) {
@@ -24,29 +24,8 @@ export default function UpcomingEvents() {
 
         const data = await response.json();
 
-        // ✅ Today in Dhaka (YYYY-MM-DD)
-        const today = new Intl.DateTimeFormat("en-CA", {
-          timeZone: "Asia/Dhaka",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }).format(new Date());
-
-        // ✅ Filter + sort
-        const upcomingEvents = data
-          .filter((event) => {
-            if (!event.date) return false;
-
-            // date string (YYYY-MM-DD) extract koro
-            const eventDate = String(event.date).slice(0, 10);
-            return eventDate >= today;
-          })
-          .sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-          )
-          .slice(0, 6);
-
-        setEvents(upcomingEvents);
+        
+        setEvents(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Upcoming events error:", error);
         setEvents([]);
