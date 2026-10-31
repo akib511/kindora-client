@@ -11,5 +11,5 @@ export default async function EventDetailsPage({ params }) {
   const { id } = await params;
   const event = getEventById(id);
 
-  return <EventDetails event={event} />;
+  return <EventDetails key={id} id={id} event={event} />;
 }

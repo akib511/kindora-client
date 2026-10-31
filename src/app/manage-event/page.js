@@ -1,50 +1,79 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { CalendarDays, MapPin, Pencil, Trash2, Plus } from "lucide-react";
-
-const initialEvents = [
-  {
-    id: 1,
-    title: "Community Park Cleanup",
-    category: "Environment",
-    date: "2026-11-15",
-    location: "Central Park, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
-  },
-  {
-    id: 2,
-    title: "Food Distribution Drive",
-    category: "Community Support",
-    date: "2026-11-20",
-    location: "Mirpur, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800",
-  },
-  {
-    id: 3,
-    title: "Tree Plantation Program",
-    category: "Environment",
-    date: "2026-11-25",
-    location: "Dhanmondi, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800",
-  },
-];
+import { toast } from "sonner";
+import Swal from "sweetalert2";
 
 export default function ManageEventsPage() {
-  const [events, setEvents] = useState(initialEvents);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const handleDelete = (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this event?"
-    );
+  // Get Events from Backend
+  useEffect(() => {
+    const getEvents = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/events");
 
-    if (confirmDelete) {
-      setEvents(events.filter((event) => event.id !== id));
+        if (!response.ok) {
+          throw new Error("Failed to load events");
+        }
+
+        const data = await response.json();
+        setEvents(data);
+      } catch (error) {
+        console.log("Get events error:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getEvents();
+  }, []);
+
+  // Delete Event
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This event will be permanently deleted!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/events/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete event");
+      }
+
+      setEvents((previousEvents) =>
+        previousEvents.filter((event) => event._id !== id)
+      );
+
+      toast.success("Event deleted successfully!");
+    } catch (error) {
+      console.log("Delete error:", error);
+      toast.error(error.message || "Failed to delete event");
     }
   };
 
@@ -79,18 +108,37 @@ export default function ManageEventsPage() {
 
         {/* Event Count */}
         <div className="mb-8 rounded-2xl border border-border bg-card p-5 text-card-foreground">
-          <p className="text-sm text-muted-foreground">Total Created Events</p>
+          <p className="text-sm text-muted-foreground">
+            Total Created Events
+          </p>
+
           <h2 className="mt-1 text-3xl font-bold text-green-700 dark:text-green-400">
             {events.length}
           </h2>
         </div>
 
-        {/* Events */}
-        {events.length > 0 ? (
+        {/* Loading */}
+        {loading ? (
+          <div className="py-20 text-center text-muted-foreground">
+            Loading events...
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-border bg-card py-20 text-center">
+            <h3 className="text-xl font-semibold text-red-600">
+              Failed to load events
+            </h3>
+
+            <p className="mt-2 text-sm text-muted-foreground">
+              {error}
+            </p>
+          </div>
+        ) : events.length > 0 ? (
+
+          /* Events */
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {events.map((event) => (
               <div
-                key={event.id}
+                key={event._id}
                 className="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-lg"
               >
                 {/* Image */}
@@ -99,6 +147,7 @@ export default function ManageEventsPage() {
                     src={event.image}
                     alt={event.title}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
 
@@ -119,6 +168,7 @@ export default function ManageEventsPage() {
                         size={17}
                         className="shrink-0 text-green-700 dark:text-green-400"
                       />
+
                       {new Date(event.date).toLocaleDateString("en-US", {
                         day: "numeric",
                         month: "long",
@@ -131,6 +181,7 @@ export default function ManageEventsPage() {
                         size={17}
                         className="shrink-0 text-green-700 dark:text-green-400"
                       />
+
                       {event.location}
                     </p>
                   </div>
@@ -138,7 +189,7 @@ export default function ManageEventsPage() {
                   {/* Actions */}
                   <div className="mt-6 flex gap-3 border-t border-border pt-5">
                     <Link
-                      href={`/edit-event/${event.id}`}
+                      href={`/edit-event/${event._id}`}
                       className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-50 py-2.5 text-sm font-semibold text-green-800 transition-colors hover:bg-green-100 dark:bg-green-500/10 dark:text-green-300 dark:hover:bg-green-500/20"
                     >
                       <Pencil size={16} />
@@ -146,7 +197,7 @@ export default function ManageEventsPage() {
                     </Link>
 
                     <button
-                      onClick={() => handleDelete(event.id)}
+                      onClick={() => handleDelete(event._id)}
                       className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
                     >
                       <Trash2 size={16} />
@@ -157,7 +208,10 @@ export default function ManageEventsPage() {
               </div>
             ))}
           </div>
+
         ) : (
+
+          /* Empty State */
           <div className="rounded-2xl border border-border bg-card px-5 py-16 text-center text-card-foreground">
             <CalendarDays
               size={45}
@@ -169,7 +223,7 @@ export default function ManageEventsPage() {
             </h2>
 
             <p className="mb-6 mt-2 text-muted-foreground">
-              You haven not created any events yet.
+              You haven&apos;t created any events yet.
             </p>
 
             <Link
@@ -181,6 +235,7 @@ export default function ManageEventsPage() {
             </Link>
           </div>
         )}
+
       </div>
     </main>
   );

@@ -1,87 +1,120 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
-
-const initialEvents = [
-  {
-    id: "1",
-    title: "Community Park Cleanup",
-    description:
-      "Join us to clean our local community park and make it a better place for everyone.",
-    category: "Environment",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
-    location: "Central Park, Dhaka",
-    date: "2026-11-15",
-  },
-  {
-    id: "2",
-    title: "Food Distribution Drive",
-    description:
-      "Help distribute food among people who need support in our community.",
-    category: "Community Support",
-    image: "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800",
-    location: "Mirpur, Dhaka",
-    date: "2026-11-20",
-  },
-  {
-    id: "3",
-    title: "Tree Plantation Program",
-    description:
-      "Let's make our environment greener by planting trees together.",
-    category: "Environment",
-    image: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800",
-    location: "Dhanmondi, Dhaka",
-    date: "2026-11-25",
-  },
-];
+import { toast } from "sonner";
 
 export default function EditEventPage() {
   const params = useParams();
   const router = useRouter();
 
-  const event = initialEvents.find((item) => item.id === params.id);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    category: "",
+    image: "",
+    location: "",
+    date: "",
+  });
 
-  const [formData, setFormData] = useState(
-    event || {
-      title: "",
-      description: "",
-      category: "",
-      image: "",
-      location: "",
-      date: "",
-    }
-  );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
 
+  // Get Event Details
+  useEffect(() => {
+    const getEvent = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/events/${params.id}`
+        );
+
+        if (!response.ok) {
+          setError(true);
+          return;
+        }
+
+        const data = await response.json();
+
+        setFormData({
+          title: data.title || "",
+          description: data.description || "",
+          category: data.category || "",
+          image: data.image || "",
+          location: data.location || "",
+          date: data.date || "",
+        });
+      } catch (error) {
+        console.log("Failed to get event:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getEvent();
+  }, [params.id]);
+
+  // Handle Input Change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
-  const handleSubmit = (e) => {
+  // Update Event
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // localStorage theke current list nao (na thakle initialEvents)
-    const stored = JSON.parse(
-      localStorage.getItem("kindora_events") || "null"
-    );
-    const baseList = stored || initialEvents;
+    try {
+      setSaving(true);
 
-    // Ei event ta update koro
-    const updated = baseList.map((item) =>
-      item.id === params.id ? { ...item, ...formData } : item
-    );
+      const response = await fetch(
+        `http://localhost:5000/events/${params.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
-    // localStorage e save
-    localStorage.setItem("kindora_events", JSON.stringify(updated));
+      const data = await response.json();
 
-    // Manage page e redirect
-    router.push("/manage-events");
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update event");
+      }
+
+      toast.success("Event updated successfully!");
+
+      router.push("/manage-event");
+    } catch (error) {
+      console.log("Update error:", error);
+      toast.error(error.message || "Something went wrong!");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (!event) {
+  // Loading
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">
+          Loading event details...
+        </p>
+      </main>
+    );
+  }
+
+  // Event Not Found
+  if (error) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="text-center">
@@ -94,7 +127,7 @@ export default function EditEventPage() {
           </p>
 
           <Link
-            href="/manage-events"
+            href="/manage-event"
             className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-white transition hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
           >
             <ArrowLeft size={18} />
@@ -111,7 +144,7 @@ export default function EditEventPage() {
 
         {/* Back Button */}
         <Link
-          href="/manage-events"
+          href="/manage-event"
           className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-green-700 dark:hover:text-green-400"
         >
           <ArrowLeft size={17} />
@@ -191,6 +224,8 @@ export default function EditEventPage() {
                 <option value="Education">Education</option>
                 <option value="Healthcare">Healthcare</option>
                 <option value="Animal Welfare">Animal Welfare</option>
+                <option value="Donation">Donation</option>
+                <option value="Food Support">Food Support</option>
               </select>
             </div>
 
@@ -249,7 +284,7 @@ export default function EditEventPage() {
             <div className="flex flex-col gap-3 pt-4 sm:flex-row">
 
               <Link
-                href="/manage-events"
+                href="/manage-event"
                 className="flex-1 rounded-xl border border-border py-3 text-center font-semibold text-muted-foreground transition-colors hover:bg-accent"
               >
                 Cancel
@@ -257,10 +292,11 @@ export default function EditEventPage() {
 
               <button
                 type="submit"
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-700 py-3 font-semibold text-white transition-colors hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
+                disabled={saving}
+                className="flex items-center justify-center gap-2 rounded-xl bg-green-700 py-3 font-semibold text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-600 dark:hover:bg-green-700"
               >
                 <Save size={18} />
-                Save Changes
+                {saving ? "Updating..." : "Save Changes"}
               </button>
 
             </div>

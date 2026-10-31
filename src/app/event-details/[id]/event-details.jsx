@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -14,13 +14,47 @@ import {
   Share2,
 } from "lucide-react";
 
-export default function EventDetails({ event }) {
+export default function EventDetails({ id, event: initialEvent }) {
   const router = useRouter();
+
+  const [event, setEvent] = useState(initialEvent ?? null);
   const [isJoined, setIsJoined] = useState(false);
+  const [loading, setLoading] = useState(!initialEvent);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (initialEvent) {
+      return;
+    }
+
+    const getEventDetails = async () => {
+      try {
+        setLoading(true);
+
+        const response = await fetch(
+          `http://localhost:5000/events/${id}`
+        );
+
+        if (!response.ok) {
+          setError(true);
+          return;
+        }
+
+        const data = await response.json();
+        setEvent(data);
+      } catch (error) {
+        console.log("Failed to load event:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getEventDetails();
+  }, [id, initialEvent]);
 
   const handleJoin = () => {
-    // Temporary login check.
-    // Later Better Auth will handle authentication.
+    // Authentication will be added later.
     const isLoggedIn = false;
 
     if (!isLoggedIn) {
@@ -31,16 +65,28 @@ export default function EventDetails({ event }) {
     setIsJoined(true);
   };
 
-  if (!event) {
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-lg font-medium text-muted-foreground">
+          Loading event details...
+        </p>
+      </main>
+    );
+  }
+
+  if (error || !event) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-foreground">
             Event Not Found
           </h2>
+
           <p className="mt-3 text-muted-foreground">
             The event you are looking for does not exist.
           </p>
+
           <Link
             href="/upcoming-events"
             className="mt-6 inline-block rounded-xl bg-green-700 px-6 py-3 font-semibold text-white transition hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
@@ -97,8 +143,12 @@ export default function EventDetails({ event }) {
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="flex items-center gap-3">
                   <CalendarDays className="text-green-700 dark:text-green-400" />
+
                   <div>
-                    <p className="text-xs text-muted-foreground">Event Date</p>
+                    <p className="text-xs text-muted-foreground">
+                      Event Date
+                    </p>
+
                     <p className="text-sm font-semibold text-foreground">
                       {event.date}
                     </p>
@@ -107,18 +157,26 @@ export default function EventDetails({ event }) {
 
                 <div className="flex items-center gap-3">
                   <Clock className="text-green-700 dark:text-green-400" />
+
                   <div>
-                    <p className="text-xs text-muted-foreground">Event Time</p>
+                    <p className="text-xs text-muted-foreground">
+                      Event Time
+                    </p>
+
                     <p className="text-sm font-semibold text-foreground">
-                      {event.time}
+                      {event.time || "Not specified"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <MapPin className="text-green-700 dark:text-green-400" />
+
                   <div>
-                    <p className="text-xs text-muted-foreground">Location</p>
+                    <p className="text-xs text-muted-foreground">
+                      Location
+                    </p>
+
                     <p className="text-sm font-semibold text-foreground">
                       {event.location}
                     </p>
@@ -127,12 +185,14 @@ export default function EventDetails({ event }) {
 
                 <div className="flex items-center gap-3">
                   <Users className="text-green-700 dark:text-green-400" />
+
                   <div>
                     <p className="text-xs text-muted-foreground">
                       Participants
                     </p>
+
                     <p className="text-sm font-semibold text-foreground">
-                      {event.participants} People
+                      {event.participants || 0} People
                     </p>
                   </div>
                 </div>
@@ -152,9 +212,12 @@ export default function EventDetails({ event }) {
               </p>
 
               <div className="mt-6 rounded-xl border border-green-600/15 bg-green-50 p-4 dark:border-green-400/15 dark:bg-green-500/10">
-                <p className="text-sm text-muted-foreground">Organized by</p>
+                <p className="text-sm text-muted-foreground">
+                  Organized by
+                </p>
+
                 <p className="mt-1 font-semibold text-green-800 dark:text-green-300">
-                  {event.organizer}
+                  {event.organizer || "Kindora Community"}
                 </p>
               </div>
 

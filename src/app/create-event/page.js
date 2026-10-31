@@ -187,7 +187,11 @@ export default function CreateEventPage() {
                     type="date"
                     name="date"
                     value={formData.date}
-                    min={new Date().toLocaleDateString("en-CA")}
+                    onFocus={(e) => {
+                      e.currentTarget.min = new Date().toLocaleDateString(
+                        "en-CA",
+                      );
+                    }}
                     onChange={handleChange}
                     required
                     className={`${inputClass} dark:[color-scheme:dark]`}
