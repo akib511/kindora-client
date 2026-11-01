@@ -77,18 +77,15 @@ export default function RegisterPage() {
     }
   };
 
-
-const handleGoogleSignIn = async () => {
-  const data = await authClient.signIn.social({
-    provider: "google",
-  });
-};
-
+  const handleGithubSignIn = async () => {
+    const data = await authClient.signIn.social({
+      provider: "github",
+    });
+  };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
-
         <Link
           href="/"
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-green-700 dark:hover:text-green-400"
@@ -98,7 +95,6 @@ const handleGoogleSignIn = async () => {
         </Link>
 
         <div className="rounded-2xl border border-border bg-card p-8 text-card-foreground shadow-lg">
-
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400">
               <UserPlus size={28} />
@@ -114,7 +110,6 @@ const handleGoogleSignIn = async () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-
             {/* Full Name */}
             <div>
               <label className="mb-2 block text-sm font-medium text-foreground">
@@ -217,9 +212,7 @@ const handleGoogleSignIn = async () => {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowConfirmPassword(!showConfirmPassword)
-                  }
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-green-700 dark:hover:text-green-400"
                   aria-label={
                     showConfirmPassword ? "Hide password" : "Show password"
@@ -257,14 +250,14 @@ const handleGoogleSignIn = async () => {
             </div>
           </div>
 
-          {/* Google */}
+          {/* github */}
           <button
-             onClick={handleGoogleSignIn}
+            onClick={handleGithubSignIn}
             type="button"
             className="w-full rounded-xl border border-border py-3 font-medium text-foreground transition-colors hover:bg-accent"
           >
             <span className="mr-2 font-bold">G</span>
-            Continue with Google
+            Continue with github
           </button>
 
           {/* Login link */}
@@ -277,7 +270,6 @@ const handleGoogleSignIn = async () => {
               Login
             </Link>
           </p>
-
         </div>
       </div>
     </main>

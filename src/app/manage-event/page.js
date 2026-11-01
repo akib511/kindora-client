@@ -6,24 +6,41 @@ import Image from "next/image";
 import { CalendarDays, MapPin, Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
+import { authClient } from "@/lib/auth-client";
 
 export default function ManageEventsPage() {
+  const { data: session, isPending } = authClient.useSession();
+  const userEmail = session?.user?.email;
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Get Events from Backend
+  // Get only my events from Backend
   useEffect(() => {
+    if (isPending) return;
+
+    if (!userEmail) {
+      setLoading(false);
+      return;
+    }
+
     const getEvents = async () => {
       try {
-        const response = await fetch("http://localhost:5000/events");
+        setLoading(true);
+        setError("");
+
+        const response = await fetch(
+          `http://localhost:5000/my-events/${encodeURIComponent(userEmail)}`,
+          { cache: "no-store" }
+        );
 
         if (!response.ok) {
           throw new Error("Failed to load events");
         }
 
         const data = await response.json();
-        setEvents(data);
+        setEvents(Array.isArray(data) ? data : []);
       } catch (error) {
         console.log("Get events error:", error);
         setError(error.message);
@@ -33,7 +50,7 @@ export default function ManageEventsPage() {
     };
 
     getEvents();
-  }, []);
+  }, [userEmail, isPending]);
 
   // Delete Event
   const handleDelete = async (id) => {
@@ -54,7 +71,9 @@ export default function ManageEventsPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/events/${id}`,
+        `http://localhost:5000/events/${id}?userEmail=${encodeURIComponent(
+          userEmail
+        )}`,
         {
           method: "DELETE",
         }
@@ -76,6 +95,24 @@ export default function ManageEventsPage() {
       toast.error(error.message || "Failed to delete event");
     }
   };
+
+  // Not logged in
+  if (!isPending && !userEmail) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4">
+        <h2 className="text-lg font-bold text-foreground">Please Login</h2>
+        <p className="text-center text-sm text-muted-foreground">
+          You need to login to manage your events.
+        </p>
+        <Link
+          href="/login"
+          className="mt-2 rounded-lg bg-green-700 px-6 py-2 text-sm font-semibold text-white transition hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
+        >
+          Go to Login
+        </Link>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background px-4 py-12 md:px-8">
@@ -118,7 +155,7 @@ export default function ManageEventsPage() {
         </div>
 
         {/* Loading */}
-        {loading ? (
+        {isPending || loading ? (
           <div className="py-20 text-center text-muted-foreground">
             Loading events...
           </div>

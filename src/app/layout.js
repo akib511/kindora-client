@@ -35,8 +35,9 @@ export default function RootLayout({ children }) {
           disableTransitionOnChange
         >
           <Navbar />
-          <div className="flex-1">{children}
-            <Toaster position="top-right" richColors />
+          <div className="flex-1">
+            {children}
+            <Toaster position="top-right" richColors duration={1000} />
           </div>
           <Footer />
         </ThemeProvider>

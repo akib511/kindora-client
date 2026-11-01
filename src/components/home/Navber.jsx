@@ -32,7 +32,7 @@ import { useRouter } from "next/navigation";
 const navLinks = [
   { name: "Home", href: "/" },
   { name: "Upcoming Events", href: "/upcoming-events" },
-  { name: "About Us", href: "/about" },
+  
 ];
 
 // ✅ Reusable avatar component — error fallback handles

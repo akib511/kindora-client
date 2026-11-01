@@ -5,10 +5,28 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+
+const categories = [
+  "Environment",
+  "Education",
+  "Healthcare",
+  "Food Support",
+  "Donation",
+  "Community Service",
+  "Other",
+];
+
+const inputClass =
+  "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-green-600 focus:ring-2 focus:ring-green-600/15 dark:focus:border-green-400 dark:focus:ring-green-400/15";
+
+const labelClass = "mb-2 block text-sm font-semibold text-foreground";
 
 export default function EditEventPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+  const userEmail = session?.user?.email;
 
   const [formData, setFormData] = useState({
     title: "",
@@ -19,6 +37,7 @@ export default function EditEventPage() {
     date: "",
   });
 
+  const [ownerEmail, setOwnerEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
@@ -37,6 +56,8 @@ export default function EditEventPage() {
         }
 
         const data = await response.json();
+
+        setOwnerEmail(data.creatorEmail || "");
 
         setFormData({
           title: data.title || "",
@@ -81,7 +102,7 @@ export default function EditEventPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData, userEmail }),
         }
       );
 
@@ -103,12 +124,10 @@ export default function EditEventPage() {
   };
 
   // Loading
-  if (loading) {
+  if (loading || isPending) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">
-          Loading event details...
-        </p>
+        <p className="text-muted-foreground">Loading event details...</p>
       </main>
     );
   }
@@ -132,6 +151,51 @@ export default function EditEventPage() {
           >
             <ArrowLeft size={18} />
             Back to Manage Events
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // Not logged in
+  if (!userEmail) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground">Please Login</h1>
+
+          <p className="mb-6 mt-3 text-muted-foreground">
+            You need to login to edit an event.
+          </p>
+
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-white transition hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // Not the owner
+  if (ownerEmail !== userEmail) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground">Not Allowed</h1>
+
+          <p className="mb-6 mt-3 text-muted-foreground">
+            You can only edit events that you created.
+          </p>
+
+          <Link
+            href="/upcoming-events"
+            className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-white transition hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700"
+          >
+            <ArrowLeft size={18} />
+            Back to Events
           </Link>
         </div>
       </main>
@@ -168,15 +232,11 @@ export default function EditEventPage() {
 
         {/* Form */}
         <div className="rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-sm md:p-8">
-
           <form onSubmit={handleSubmit} className="space-y-5">
 
             {/* Title */}
             <div>
-              <label className="mb-2 block text-sm font-semibold text-foreground">
-                Event Title
-              </label>
-
+              <label className={labelClass}>Event Title</label>
               <input
                 type="text"
                 name="title"
@@ -184,16 +244,13 @@ export default function EditEventPage() {
                 onChange={handleChange}
                 placeholder="Enter event title"
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-green-600 focus:ring-2 focus:ring-green-600/15 dark:focus:border-green-400 dark:focus:ring-green-400/15"
+                className={inputClass}
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="mb-2 block text-sm font-semibold text-foreground">
-                Event Description
-              </label>
-
+              <label className={labelClass}>Event Description</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -201,40 +258,32 @@ export default function EditEventPage() {
                 placeholder="Describe your event..."
                 rows={5}
                 required
-                className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-green-600 focus:ring-2 focus:ring-green-600/15 dark:focus:border-green-400 dark:focus:ring-green-400/15"
+                className={`${inputClass} resize-none`}
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className="mb-2 block text-sm font-semibold text-foreground">
-                Event Category
-              </label>
-
+              <label className={labelClass}>Event Category</label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-600/15 dark:focus:border-green-400 dark:focus:ring-green-400/15"
+                className={inputClass}
               >
                 <option value="">Select a category</option>
-                <option value="Environment">Environment</option>
-                <option value="Community Support">Community Support</option>
-                <option value="Education">Education</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Animal Welfare">Animal Welfare</option>
-                <option value="Donation">Donation</option>
-                <option value="Food Support">Food Support</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
               </select>
             </div>
 
             {/* Image URL */}
             <div>
-              <label className="mb-2 block text-sm font-semibold text-foreground">
-                Thumbnail Image URL
-              </label>
-
+              <label className={labelClass}>Thumbnail Image URL</label>
               <input
                 type="url"
                 name="image"
@@ -242,16 +291,13 @@ export default function EditEventPage() {
                 onChange={handleChange}
                 placeholder="https://example.com/image.jpg"
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-green-600 focus:ring-2 focus:ring-green-600/15 dark:focus:border-green-400 dark:focus:ring-green-400/15"
+                className={inputClass}
               />
             </div>
 
             {/* Location */}
             <div>
-              <label className="mb-2 block text-sm font-semibold text-foreground">
-                Event Location
-              </label>
-
+              <label className={labelClass}>Event Location</label>
               <input
                 type="text"
                 name="location"
@@ -259,16 +305,13 @@ export default function EditEventPage() {
                 onChange={handleChange}
                 placeholder="Enter event location"
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-green-600 focus:ring-2 focus:ring-green-600/15 dark:focus:border-green-400 dark:focus:ring-green-400/15"
+                className={inputClass}
               />
             </div>
 
             {/* Date */}
             <div>
-              <label className="mb-2 block text-sm font-semibold text-foreground">
-                Event Date
-              </label>
-
+              <label className={labelClass}>Event Date</label>
               <input
                 type="date"
                 name="date"
@@ -276,13 +319,12 @@ export default function EditEventPage() {
                 onChange={handleChange}
                 min={new Date().toLocaleDateString("en-CA")}
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-600/15 dark:[color-scheme:dark] dark:focus:border-green-400 dark:focus:ring-green-400/15"
+                className={`${inputClass} dark:[color-scheme:dark]`}
               />
             </div>
 
             {/* Buttons */}
             <div className="flex flex-col gap-3 pt-4 sm:flex-row">
-
               <Link
                 href="/manage-event"
                 className="flex-1 rounded-xl border border-border py-3 text-center font-semibold text-muted-foreground transition-colors hover:bg-accent"
@@ -293,12 +335,11 @@ export default function EditEventPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center justify-center gap-2 rounded-xl bg-green-700 py-3 font-semibold text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-600 dark:hover:bg-green-700"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-700 py-3 font-semibold text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-600 dark:hover:bg-green-700"
               >
                 <Save size={18} />
                 {saving ? "Updating..." : "Save Changes"}
               </button>
-
             </div>
 
           </form>

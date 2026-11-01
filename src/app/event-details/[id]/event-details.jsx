@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Swal from "sweetalert2";
 import {
   CalendarDays,
   MapPin,
@@ -14,6 +15,8 @@ import {
   Heart,
   Share2,
   CheckCircle2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -25,11 +28,15 @@ export default function EventDetails({ id, event: initialEvent }) {
   const [isJoined, setIsJoined] = useState(false);
   const [checkingJoined, setCheckingJoined] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(!initialEvent);
   const [error, setError] = useState(false);
 
-  // ✅ Real user email from session
+  // Real user email from session
   const userEmail = session?.user?.email;
+
+  // Owner check
+  const isOwner = !!userEmail && event?.creatorEmail === userEmail;
 
   // Load event if not passed
   useEffect(() => {
@@ -40,9 +47,7 @@ export default function EventDetails({ id, event: initialEvent }) {
         setLoading(true);
         setError(false);
 
-        const response = await fetch(
-          `http://localhost:5000/events/${id}`
-        );
+        const response = await fetch(`http://localhost:5000/events/${id}`);
 
         if (!response.ok) {
           setError(true);
@@ -62,7 +67,7 @@ export default function EventDetails({ id, event: initialEvent }) {
     getEventDetails();
   }, [id, initialEvent]);
 
-  // ✅ Check if already joined
+  // Check if already joined
   useEffect(() => {
     if (!userEmail || !event?._id) {
       setCheckingJoined(false);
@@ -73,16 +78,14 @@ export default function EventDetails({ id, event: initialEvent }) {
       try {
         const res = await fetch(
           `http://localhost:5000/joined-events/${encodeURIComponent(
-            userEmail
-          )}`
+            userEmail,
+          )}`,
         );
 
         if (res.ok) {
           const joined = await res.json();
           const already = Array.isArray(joined)
-            ? joined.some(
-                (item) => String(item.eventId) === String(event._id)
-              )
+            ? joined.some((item) => String(item.eventId) === String(event._id))
             : false;
           setIsJoined(already);
         }
@@ -97,7 +100,6 @@ export default function EventDetails({ id, event: initialEvent }) {
   }, [userEmail, event?._id]);
 
   const handleJoin = async () => {
-    // ✅ Login check
     if (!userEmail) {
       toast.error("Please login to join this event!");
       router.push("/login");
@@ -123,7 +125,6 @@ export default function EventDetails({ id, event: initialEvent }) {
       const data = await response.json();
 
       if (!response.ok) {
-        // 409 = already joined
         if (response.status === 409) {
           setIsJoined(true);
           toast.info("You already joined this event.");
@@ -136,15 +137,55 @@ export default function EventDetails({ id, event: initialEvent }) {
       setIsJoined(true);
       toast.success("Successfully joined the event!");
 
-      // ✅ Event count refresh (participants update)
       setEvent((prev) =>
-        prev ? { ...prev, participants: (prev.participants || 0) + 1 } : prev
+        prev ? { ...prev, participants: (prev.participants || 0) + 1 } : prev,
       );
     } catch (error) {
       console.error("Join Event Error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setJoining(false);
+    }
+  };
+
+  // Delete event (owner only)
+  const handleDelete = async () => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This event will be permanently deleted!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      setDeleting(true);
+
+      const response = await fetch(
+        `http://localhost:5000/events/${event._id}?userEmail=${encodeURIComponent(
+          userEmail,
+        )}`,
+        { method: "DELETE" },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete event");
+      }
+
+      toast.success("Event deleted successfully!");
+      router.push("/manage-event");
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error(error.message || "Failed to delete event");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -227,9 +268,7 @@ export default function EventDetails({ id, event: initialEvent }) {
                 <div className="flex items-center gap-3">
                   <CalendarDays className="shrink-0 text-green-700 dark:text-green-400" />
                   <div>
-                    <p className="text-xs text-muted-foreground">
-                      Event Date
-                    </p>
+                    <p className="text-xs text-muted-foreground">Event Date</p>
                     <p className="text-sm font-semibold text-foreground">
                       {event.date}
                     </p>
@@ -239,9 +278,7 @@ export default function EventDetails({ id, event: initialEvent }) {
                 <div className="flex items-center gap-3">
                   <Clock className="shrink-0 text-green-700 dark:text-green-400" />
                   <div>
-                    <p className="text-xs text-muted-foreground">
-                      Event Time
-                    </p>
+                    <p className="text-xs text-muted-foreground">Event Time</p>
                     <p className="text-sm font-semibold text-foreground">
                       {event.time || "Not specified"}
                     </p>
@@ -251,9 +288,7 @@ export default function EventDetails({ id, event: initialEvent }) {
                 <div className="flex items-center gap-3">
                   <MapPin className="shrink-0 text-green-700 dark:text-green-400" />
                   <div>
-                    <p className="text-xs text-muted-foreground">
-                      Location
-                    </p>
+                    <p className="text-xs text-muted-foreground">Location</p>
                     <p className="text-sm font-semibold text-foreground">
                       {event.location}
                     </p>
@@ -282,16 +317,14 @@ export default function EventDetails({ id, event: initialEvent }) {
               </h2>
 
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Be part of something meaningful. Join this event and
-                help create positive change.
+                Be part of something meaningful. Join this event and help create
+                positive change.
               </p>
 
               <div className="mt-6 rounded-xl border border-green-600/15 bg-green-50 p-4 dark:border-green-400/15 dark:bg-green-500/10">
-                <p className="text-sm text-muted-foreground">
-                  Organized by
-                </p>
+                <p className="text-sm text-muted-foreground">Organized by</p>
                 <p className="mt-1 font-semibold text-green-800 dark:text-green-300">
-                  {event.organizer || "Kindora Community"}
+                  {event.organizer || event.creatorName || "Kindora Community"}
                 </p>
               </div>
 
@@ -317,6 +350,29 @@ export default function EventDetails({ id, event: initialEvent }) {
                   </>
                 )}
               </button>
+
+              {/* Edit / Delete: shudhu owner er jonno */}
+              {isOwner && (
+                <div className="mt-3 flex gap-3">
+                  <Link
+                    href={`/edit-event/${event._id}`}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-50 py-3 text-sm font-semibold text-green-800 transition-colors hover:bg-green-100 dark:bg-green-500/10 dark:text-green-300 dark:hover:bg-green-500/20"
+                  >
+                    <Pencil size={16} />
+                    Edit
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-50 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                  >
+                    <Trash2 size={16} />
+                    {deleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              )}
 
               <button
                 type="button"
