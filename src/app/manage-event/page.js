@@ -8,6 +8,16 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { authClient } from "@/lib/auth-client";
 
+const getToken = async () => {
+  const { data, error } = await authClient.token();
+
+  if (error || !data?.token) {
+    throw new Error("Failed to get JWT token");
+  }
+
+  return data.token;
+};
+
 export default function ManageEventsPage() {
   const { data: session, isPending } = authClient.useSession();
   const userEmail = session?.user?.email;
@@ -16,24 +26,28 @@ export default function ManageEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Get only my events from Backend
+  // Get only my events from Backend (secured)
   useEffect(() => {
     if (isPending) return;
 
-    if (!userEmail) {
-      setLoading(false);
-      return;
-    }
-
     const getEvents = async () => {
+      if (!userEmail) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `http://localhost:5000/my-events/${encodeURIComponent(userEmail)}`,
-          { cache: "no-store" }
-        );
+        const token = await getToken();
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/my-events`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        });
 
         if (!response.ok) {
           throw new Error("Failed to load events");
@@ -41,9 +55,9 @@ export default function ManageEventsPage() {
 
         const data = await response.json();
         setEvents(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.log("Get events error:", error);
-        setError(error.message);
+      } catch (err) {
+        console.log("Get events error:", err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -52,7 +66,7 @@ export default function ManageEventsPage() {
     getEvents();
   }, [userEmail, isPending]);
 
-  // Delete Event
+  // Delete Event (secured)
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Are you sure?",
@@ -70,14 +84,14 @@ export default function ManageEventsPage() {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/events/${id}?userEmail=${encodeURIComponent(
-          userEmail
-        )}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const token = await getToken();
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await response.json();
 
@@ -90,9 +104,9 @@ export default function ManageEventsPage() {
       );
 
       toast.success("Event deleted successfully!");
-    } catch (error) {
-      console.log("Delete error:", error);
-      toast.error(error.message || "Failed to delete event");
+    } catch (err) {
+      console.log("Delete error:", err);
+      toast.error(err.message || "Failed to delete event");
     }
   };
 

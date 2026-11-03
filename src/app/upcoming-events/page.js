@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Search, MapPin, CalendarDays, ArrowRight } from "lucide-react";
 
+
 const categories = [
   "All",
   "Environment",
@@ -22,38 +23,45 @@ export default function UpcomingEventsPage() {
   const [error, setError] = useState("");
 
   // Get Events from Backend
-  useEffect(() => {
-    fetch("http://localhost:5000/events")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch events");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setEvents(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
+ 
+useEffect(() => {
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`);
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch events");
+      }
+
+      const data = await res.json();
+      setEvents(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchEvents();
+}, []);
+
+ 
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch = event.title
       .toLowerCase()
       .includes(search.toLowerCase());
 
-    const matchesCategory =
-      category === "All" || event.category === category;
+    const matchesCategory = category === "All" || event.category === category;
 
     return matchesSearch && matchesCategory;
   });
 
   return (
     <main className="min-h-screen bg-background">
-
       {/* Hero */}
       <section className="bg-green-800 px-4 py-20 text-center text-white dark:bg-green-900">
         <p className="mb-3 text-sm font-semibold uppercase tracking-[3px] text-green-200">
@@ -65,13 +73,12 @@ export default function UpcomingEventsPage() {
         </h1>
 
         <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-green-100 md:text-base">
-          Discover meaningful events around you and become a part
-          of positive change in your community.
+          Discover meaningful events around you and become a part of positive
+          change in your community.
         </p>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-
         {/* Header + Search */}
         <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between md:mb-10">
           <div>
@@ -133,12 +140,9 @@ export default function UpcomingEventsPage() {
             <h3 className="text-xl font-semibold text-red-600">
               Failed to load events
             </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {error}
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{error}</p>
           </div>
         ) : filteredEvents.length > 0 ? (
-
           /* Event grid - Mobile e 1 col, tab e 2, desktop e 3 */
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {filteredEvents.map((event) => (
@@ -200,7 +204,6 @@ export default function UpcomingEventsPage() {
               </div>
             ))}
           </div>
-
         ) : (
           <div className="rounded-2xl border border-border bg-card py-20 text-center">
             <h3 className="text-xl font-semibold text-foreground">
@@ -211,7 +214,6 @@ export default function UpcomingEventsPage() {
             </p>
           </div>
         )}
-
       </section>
     </main>
   );

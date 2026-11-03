@@ -20,6 +20,16 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
+const getToken = async () => {
+  const { data, error } = await authClient.token();
+
+  if (error || !data?.token) {
+    throw new Error("Failed to get JWT token");
+  }
+
+  return data.token;
+};
+
 export default function EventDetails({ id, event: initialEvent }) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
@@ -47,7 +57,7 @@ export default function EventDetails({ id, event: initialEvent }) {
         setLoading(true);
         setError(false);
 
-        const response = await fetch(`http://localhost:5000/events/${id}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${id}`);
 
         if (!response.ok) {
           setError(true);
@@ -67,20 +77,23 @@ export default function EventDetails({ id, event: initialEvent }) {
     getEventDetails();
   }, [id, initialEvent]);
 
-  // Check if already joined
+  // Check if already joined (secured)
   useEffect(() => {
-    if (!userEmail || !event?._id) {
-      setCheckingJoined(false);
-      return;
-    }
-
     const checkJoined = async () => {
+      if (!userEmail || !event?._id) {
+        setCheckingJoined(false);
+        return;
+      }
+
       try {
-        const res = await fetch(
-          `http://localhost:5000/joined-events/${encodeURIComponent(
-            userEmail,
-          )}`,
-        );
+        const token = await getToken();
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/joined-events`, {
+          cache: "no-store",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (res.ok) {
           const joined = await res.json();
@@ -99,6 +112,7 @@ export default function EventDetails({ id, event: initialEvent }) {
     checkJoined();
   }, [userEmail, event?._id]);
 
+  // Join event (secured)
   const handleJoin = async () => {
     if (!userEmail) {
       toast.error("Please login to join this event!");
@@ -111,14 +125,16 @@ export default function EventDetails({ id, event: initialEvent }) {
     try {
       setJoining(true);
 
-      const response = await fetch("http://localhost:5000/join-event", {
+      const token = await getToken();
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/join-event`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           eventId: event._id,
-          userEmail,
         }),
       });
 
@@ -148,7 +164,7 @@ export default function EventDetails({ id, event: initialEvent }) {
     }
   };
 
-  // Delete event (owner only)
+  // Delete event (owner only, secured)
   const handleDelete = async () => {
     const result = await Swal.fire({
       title: "Are you sure?",
@@ -166,12 +182,14 @@ export default function EventDetails({ id, event: initialEvent }) {
     try {
       setDeleting(true);
 
-      const response = await fetch(
-        `http://localhost:5000/events/${event._id}?userEmail=${encodeURIComponent(
-          userEmail,
-        )}`,
-        { method: "DELETE" },
-      );
+      const token = await getToken();
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${event._id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await response.json();
 

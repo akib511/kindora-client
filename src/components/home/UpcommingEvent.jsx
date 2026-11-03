@@ -11,12 +11,11 @@ export default function UpcomingEvents() {
 
   useEffect(() => {
     const fetchUpcomingEvents = async () => {
+      
       try {
         setLoading(true);
 
-        const response = await fetch("http://localhost:5000/recent-events", {
-          cache: "no-store",
-        });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/recent-events`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch events");

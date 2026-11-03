@@ -15,7 +15,7 @@ export default function HowItWorks() {
             <span className="h-px w-10 bg-border sm:w-16"></span>
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-            Here's how it works
+            Here&apos;s how it works
           </h2>
         </div>
 

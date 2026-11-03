@@ -14,6 +14,7 @@ import {
   FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PROXY_FILENAME } from "next/dist/lib/constants";
 
 const categories = [
   "Environment",
@@ -69,16 +70,24 @@ export default function CreateEventPage() {
     try {
       setLoading(true);
 
+      //jwt token 
+      const { data : tokendata , error: tokenError } = await authClient.token();
+
+      if (tokenError || !tokendata?.token){
+      throw new Error("Failed to get JWT token");
+    }
+
       const eventData = {
         ...formData,
-        creatorEmail: session.user.email,
+      
         creatorName: session.user.name,
       };
 
-      const response = await fetch("http://localhost:5000/events", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${tokendata.token}`,
         },
         body: JSON.stringify(eventData),
       });

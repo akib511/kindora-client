@@ -17,6 +17,16 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
+const getToken = async () => {
+  const { data, error } = await authClient.token();
+
+  if (error || !data?.token) {
+    throw new Error("Failed to get JWT token");
+  }
+
+  return data.token;
+};
+
 export default function ProfilePage() {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
@@ -45,28 +55,30 @@ export default function ProfilePage() {
 
     const currentUser = session.user;
 
-    setUser((previousUser) => ({
-      ...previousUser,
-      name: currentUser.name || "",
-      email: currentUser.email || "",
-      photoURL: currentUser.image || "",
-    }));
-
-    setEditForm({
-      name: currentUser.name || "",
-      photoURL: currentUser.image || "",
-      location: "Dhaka, Bangladesh",
-    });
-
     const loadStatistics = async () => {
+      setUser((previousUser) => ({
+        ...previousUser,
+        name: currentUser.name || "",
+        email: currentUser.email || "",
+        photoURL: currentUser.image || "",
+      }));
+
+      setEditForm({
+        name: currentUser.name || "",
+        photoURL: currentUser.image || "",
+        location: "Dhaka, Bangladesh",
+      });
+
       try {
+        const token = await getToken();
+
         const [eventsResponse, joinedResponse] = await Promise.all([
-          fetch("http://localhost:5000/events"),
-          fetch(
-            `http://localhost:5000/joined-events/${encodeURIComponent(
-              currentUser.email
-            )}`
-          ),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/joined-events`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
         ]);
 
         if (eventsResponse.ok) {

@@ -14,6 +14,22 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
+
+
+
+const getToken = async () => {
+  const { data, error } = await authClient.token();
+
+  if (error || !data?.token) {
+    throw new Error("Failed to get JWT token");
+  }
+
+  return data.token;
+};
+
+
+
+
 export default function JoinedEventsPage() {
   const { data: session, isPending } = authClient.useSession();
 
@@ -29,76 +45,83 @@ export default function JoinedEventsPage() {
   const userEmail = session?.user?.email;
 
   // Backend theke joined events fetch
-  useEffect(() => {
-    if (isPending) return;
+ 
+// Backend theke joined events fetch (secured)
+useEffect(() => {
+  if (isPending) return;
 
+  const fetchJoinedEvents = async () => {
     if (!userEmail) {
       setLoading(false);
       return;
     }
 
-    const fetchJoinedEvents = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-
-        const res = await fetch(
-          `http://localhost:5000/joined-events/${encodeURIComponent(
-            userEmail
-          )}`,
-          { cache: "no-store" }
-        );
-
-        if (!res.ok) {
-          setError(true);
-          return;
-        }
-
-        const data = await res.json();
-        setEvents(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Failed to fetch joined events:", err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchJoinedEvents();
-  }, [userEmail, isPending]);
-
-  // Leave event
-  const handleLeave = async () => {
-    if (!confirmItem) return;
-
-    const joinedId = confirmItem._id;
-
     try {
-      setLeavingId(joinedId);
-      setLeaveError("");
+      setLoading(true);
+      setError(false);
 
-      const res = await fetch(
-        `http://localhost:5000/leave-event/${joinedId}?userEmail=${encodeURIComponent(
-          userEmail
-        )}`,
-        { method: "DELETE" }
-      );
+      const token = await getToken();
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/joined-events`, {
+        cache: "no-store",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "Failed to leave event");
+        setError(true);
+        return;
       }
 
-      // UI theke sathe sathe remove
-      setEvents((prev) => prev.filter((item) => item._id !== joinedId));
-      setConfirmItem(null);
+      const data = await res.json();
+      setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to leave event:", err);
-      setLeaveError(err.message || "Something went wrong");
+      console.error("Failed to fetch joined events:", err);
+      setError(true);
     } finally {
-      setLeavingId(null);
+      setLoading(false);
     }
   };
+
+  fetchJoinedEvents();
+}, [userEmail, isPending]);
+
+
+// Leave event (secured)
+const handleLeave = async () => {
+  if (!confirmItem) return;
+
+  const joinedId = confirmItem._id;
+
+  try {
+    setLeavingId(joinedId);
+    setLeaveError("");
+
+    const token = await getToken();
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leave-event/${joinedId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || "Failed to leave event");
+    }
+
+    // UI theke sathe sathe remove
+    setEvents((prev) => prev.filter((item) => item._id !== joinedId));
+    setConfirmItem(null);
+  } catch (err) {
+    console.error("Failed to leave event:", err);
+    setLeaveError(err.message || "Something went wrong");
+  } finally {
+    setLeavingId(null);
+  }
+};
 
   // Loading state
   if (isPending || loading) {

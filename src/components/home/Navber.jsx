@@ -79,8 +79,8 @@ export default function Navbar() {
 
   const user = session?.user;
 
-  // 🔍 Debug — console e user object dekho (temporary)
-  // console.log("Navbar user:", user);
+
+
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -147,7 +147,7 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
 
           <ThemeToggle />
-
+    
           {/* Desktop Auth */}
           <div className="relative hidden md:block">
             {!isPending && !user && (
